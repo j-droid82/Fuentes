@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManuProof - Demuestra que tu texto es humano</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Cabecera -->
+    <header class="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="resetApp()">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-feather-pointed text-white text-sm"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight text-white">ManuProof</span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="status-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-slate-500" id="status-dot"></span>
+                    <span id="status-text">Listo para redactar</span>
+                </div>
+                <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition border border-slate-700/50">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 flex flex-col">
+
+        <!-- Vista de Redacción (Editor) -->
+        <div id="editor-view" class="flex-1 flex flex-col">
+            <div class="mb-6 text-center sm:text-left">
+                <h1 class="text-3xl font-extrabold tracking-tight text-white mb-2">Demuestra que tu texto es humano.</h1>
+                <p class="text-slate-400 text-sm max-w-2xl">Escribe aquí tu fuente y el sistema detectará si es IA.</p>
+            </div>
+
+            <div class="flex-1 bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl flex flex-col overflow-hidden backdrop-blur">
+                <!-- Barra de herramientas superior del editor -->
+                <div class="px-5 py-3 border-b border-slate-800/80 bg-slate-900/90 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-align-left text-slate-500"></i>
+                            <span>Palabras: <strong id="word-count" class="text-white font-mono">0</strong></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-font text-slate-500"></i>
+                            <span>Caracteres: <strong id="char-count" class="text-white font-mono">0</strong></span>
+                        </div>
+                        <div class="hidden md:flex items-center gap-2">
+                            <i class="fa-solid fa-keyboard text-slate-500"></i>
+                            <span>Pulsaciones: <strong id="keystroke-count" class="text-white font-mono">0</strong></span>
+                        </div>
+                    </div>
+                    <div class="text-amber-400/90 font-medium text-[11px] flex items-center gap-1.5" id="min-chars-notice">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>Faltan <span id="chars-needed">20</span> caracteres para generar</span>
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="relative flex-1 flex flex-col p-5">
+                    <textarea 
+                        id="writing-input" 
+                        placeholder="Comienza a escribir aquí tu documento de forma natural..."
+                        class="w-full flex-1 bg-transparent text-slate-100 placeholder-slate-600 focus:outline-none resize-none font-normal text-base leading-relaxed"
+                    ></textarea>
+                </div>
+
+                <!-- Pie del editor con botón de generación -->
+                <div class="px-5 py-4 border-t border-slate-800/80 bg-slate-900/90 flex items-center justify-between">
+                    <div class="text-xs text-slate-500 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-brand-500"></i>
+                        <span>Todo el proceso se procesa de forma segura en este dispositivo</span>
+                    </div>
+                    <button 
+                        id="generate-btn" 
+                        onclick="generateProof()" 
+                        disabled
+                        class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-medium text-sm transition shadow-lg shadow-brand-600/20 flex items-center gap-2 cursor-pointer"
+                    >
+                        <span>Generar enlace de prueba</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista de Resultado / Verificación (Oculta por defecto) -->
+        <div id="result-view" class="hidden flex-1 flex flex-col">
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white mb-1">Informe de Verificación</h1>
+                    <p class="text-slate-400 text-sm">Este documento cuenta con una prueba criptográfica de autoría humana.</p>
+                </div>
+                <button onclick="resetApp()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition flex items-center gap-2 border border-slate-700">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Nuevo documento</span>
+                </button>
+            </div>
+
+            <!-- CUADRO PARA COMPARTIR ENLACE (ARRIBA) -->
+            <div class="bg-gradient-to-r from-brand-950/40 to-slate-900 border border-brand-900/50 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600/20 text-brand-400 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-link"></i>
+                    </div>
+                    <div>
+                        <span class="text-sm font-semibold text-white block">Enlace de verificación listo</span>
+                        <span class="text-xs text-slate-400">Comparte este enlace para comprobar la autenticidad.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="text" id="share-link-input-top" readonly class="bg-slate-950 border border-slate-800 text-xs text-slate-300 px-3 py-2 rounded-xl w-full sm:w-64 focus:outline-none font-mono">
+                    <button onclick="copyShareLink('top')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-copy"></i>
+                        <span id="copy-btn-text-top">Copiar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel de Estadísticas del Informe -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between backdrop-blur">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Veredicto de Autoría</span>
+                    <div class="flex items-center gap-3">
+                        <div id="verdict-icon-container" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg">
+                            <i id="verdict-icon" class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div>
+                            <span id="verdict-title" class="text-lg font-bold text-white block">100% Humano</span>
+                            <span id="verdict-subtitle" class="text-xs text-slate-400">Escritura orgánica</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between backdrop-blur">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Palabras y Caracteres</span>
+                    <div>
+                        <span id="res-words" class="text-2xl font-bold font-mono text-white">0</span>
+                        <span class="text-xs text-slate-400 ml-1">palabras</span>
+                        <div class="text-xs text-slate-500 mt-1"><span id="res-chars">0</span> caracteres</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between backdrop-blur">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Tiempo de Redacción</span>
+                    <div>
+                        <span id="res-time" class="text-2xl font-bold font-mono text-white">0s</span>
+                        <span class="text-xs text-slate-400 ml-1">duración</span>
+                        <div class="text-xs text-slate-500 mt-1"><span id="res-keystrokes">0</span> pulsaciones reales</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between backdrop-blur">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Eventos de Pegado</span>
+                    <div>
+                        <span id="res-pastes" class="text-2xl font-bold font-mono text-white">0</span>
+                        <span class="text-xs text-slate-400 ml-1">bloques</span>
+                        <div class="text-xs text-slate-500 mt-1" id="res-paste-status">Sin contenido pegado</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenedor del Texto y Reproductor -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 mb-6 backdrop-blur">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Texto Verificado</h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="playSession()" id="play-btn" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-play text-[10px]"></i>
+                            <span>Reproducir sesión</span>
+                        </button>
+                        <button onclick="pauseSession()" id="pause-btn" class="hidden px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-pause text-[10px]"></i>
+                            <span>Pausar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Barra de reproducción visual -->
+                <div id="playback-progress-container" class="hidden mb-4 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div id="playback-bar" class="bg-brand-500 h-full w-0 transition-all duration-100"></div>
+                </div>
+
+                <div id="verified-text-display" class="font-normal text-slate-200 text-base leading-relaxed whitespace-pre-wrap select-text min-h-[120px]"></div>
+            </div>
+
+            <!-- CUADRO PARA COMPARTIR ENLACE (ABAJO) -->
+            <div class="bg-gradient-to-r from-brand-950/40 to-slate-900 border border-brand-900/50 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600/20 text-brand-400 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-link"></i>
+                    </div>
+                    <div>
+                        <span class="text-sm font-semibold text-white block">Enlace de verificación listo</span>
+                        <span class="text-xs text-slate-400">Comparte este enlace para que cualquier persona compruebe la autenticidad.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="text" id="share-link-input-bottom" readonly class="bg-slate-950 border border-slate-800 text-xs text-slate-300 px-3 py-2 rounded-xl w-full sm:w-64 focus:outline-none font-mono">
+                    <button onclick="copyShareLink('bottom')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-copy"></i>
+                        <span id="copy-btn-text-bottom">Copiar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+        <p>ManuProof &copy; 2026 &bull; Todos los derechos reservados</p>
+    </footer>
+
+    <!-- Lógica de la Aplicación -->
+    <script>
+        let sessionData = {
+            text: "",
+            keystrokes: 0,
+            startTime: null,
+            duration: 0,
+            events: [],
+            pasteEvents: [],
+            aiDetected: false,
+            aiReason: ""
+        };
+
+        let isPlaybackRunning = false;
+        let playbackTimer = null;
+
+        const inputEl = document.getElementById('writing-input');
+        const wordCountEl = document.getElementById('word-count');
+        const charCountEl = document.getElementById('char-count');
+        const keystrokeCountEl = document.getElementById('keystroke-count');
+        const generateBtn = document.getElementById('generate-btn');
+        const minCharsNotice = document.getElementById('min-chars-notice');
+        const charsNeededEl = document.getElementById('chars-needed');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                try {
+                    const jsonString = decodeURIComponent(escape(atob(hash)));
+                    const loadedData = JSON.parse(jsonString);
+                    showResultView(loadedData);
+                    return;
+                } catch (e) {
+                    console.error("Error al cargar el enlace comprimido:", e);
+                }
+            }
+
+            sessionData.startTime = Date.now();
+            
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Space') {
+                    sessionData.keystrokes++;
+                    keystrokeCountEl.textContent = sessionData.keystrokes;
+                    
+                    sessionData.events.push({
+                        type: 'key',
+                        time: Date.now() - sessionData.startTime,
+                        val: inputEl.value
+                    });
+                }
+            });
+
+            inputEl.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                
+                if (pastedText.length > 100) {
+                    sessionData.aiDetected = true;
+                    sessionData.aiReason = `Se ha detectado un bloque de texto pegado de ${pastedText.length} caracteres (> 100 caracteres permitidos).`;
+                }
+
+                sessionData.pasteEvents.push({
+                    length: pastedText.length,
+                    time: Date.now() - sessionData.startTime
+                });
+
+                const start = inputEl.selectionStart;
+                const end = inputEl.selectionEnd;
+                const currentVal = inputEl.value;
+                inputEl.value = currentVal.substring(0, start) + pastedText + currentVal.substring(end);
+                inputEl.selectionStart = inputEl.selectionEnd = start + pastedText.length;
+
+                updateCounters();
+            });
+
+            inputEl.addEventListener('input', () => {
+                updateCounters();
+            });
+        });
+
+        function updateCounters() {
+            const text = inputEl.value;
+            const charCount = text.length;
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+
+            wordCountEl.textContent = words;
+            charCountEl.textContent = charCount;
+
+            const minChars = 20;
+            if (charCount >= minChars) {
+                generateBtn.removeAttribute('disabled');
+                minCharsNotice.classList.add('hidden');
+            } else {
+                generateBtn.setAttribute('disabled', 'true');
+                minCharsNotice.classList.remove('hidden');
+                charsNeededEl.textContent = minChars - charCount;
+            }
+        }
+
+        function generateProof() {
+            sessionData.text = inputEl.value;
+            sessionData.duration = Math.round((Date.now() - sessionData.startTime) / 1000);
+
+            if (sessionData.text.length > 100 && sessionData.keystrokes < (sessionData.text.length * 0.15)) {
+                sessionData.aiDetected = true;
+                sessionData.aiReason = "El volumen de texto no se corresponde con la actividad de tecleo registrada.";
+            }
+
+            const jsonString = JSON.stringify(sessionData);
+            const base64Hash = btoa(unescape(encodeURIComponent(jsonString)));
+
+            const currentUrl = window.location.href.split('#')[0];
+            const finalLink = `${currentUrl}#${base64Hash}`;
+
+            showResultView(sessionData, finalLink);
+        }
+
+        function showResultView(data, link = null) {
+            document.getElementById('editor-view').classList.add('hidden');
+            document.getElementById('result-view').classList.remove('hidden');
+
+            document.getElementById('res-words').textContent = data.text.trim() === '' ? 0 : data.text.trim().split(/\s+/).length;
+            document.getElementById('res-chars').textContent = data.text.length;
+            document.getElementById('res-time').textContent = data.duration + 's';
+            document.getElementById('res-keystrokes').textContent = data.keystrokes;
+
+            const pastesCount = data.pasteEvents ? data.pasteEvents.length : 0;
+            document.getElementById('res-pastes').textContent = pastesCount;
+
+            if (pastesCount > 0) {
+                document.getElementById('res-paste-status').textContent = `${pastesCount} bloque(s) pegado(s) detectado(s)`;
+                document.getElementById('res-paste-status').classList.add('text-amber-400');
+            }
+
+            const verdictIconContainer = document.getElementById('verdict-icon-container');
+            const verdictIcon = document.getElementById('verdict-icon');
+            const verdictTitle = document.getElementById('verdict-title');
+            const verdictSubtitle = document.getElementById('verdict-subtitle');
+
+            if (data.aiDetected) {
+                verdictIconContainer.className = "w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg";
+                verdictIcon.className = "fa-solid fa-triangle-exclamation";
+                verdictTitle.textContent = "Posible IA detectada";
+                verdictSubtitle.textContent = data.aiReason || "Uso de texto pegado masivo";
+                verdictTitle.className = "text-lg font-bold text-rose-400 block";
+            } else {
+                verdictIconContainer.className = "w-10 h-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-lg";
+                verdictIcon.className = "fa-solid fa-user-check";
+                verdictTitle.textContent = "100% Humano";
+                verdictSubtitle.textContent = "Escritura orgánica verificada";
+                verdictTitle.className = "text-lg font-bold text-white block";
+            }
+
+            document.getElementById('verified-text-display').textContent = data.text;
+
+            const finalLinkToDisplay = link || window.location.href;
+            document.getElementById('share-link-input-top').value = finalLinkToDisplay;
+            document.getElementById('share-link-input-bottom').value = finalLinkToDisplay;
+
+            window.activeSessionData = data;
+        }
+
+        function copyShareLink(position) {
+            const input = document.getElementById(`share-link-input-${position}`);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+
+            const btnText = document.getElementById(`copy-btn-text-${position}`);
+            btnText.textContent = "¡Copiado!";
+            setTimeout(() => {
+                btnText.textContent = "Copiar";
+            }, 2000);
+        }
+
+        function resetApp() {
+            window.location.hash = '';
+            window.location.reload();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function playSession() {
+            const data = window.activeSessionData;
+            if (!data || !data.events || data.events.length === 0) {
+                alert("Este documento no contiene registros detallados de pulsaciones (sesión antigua o importada sin eventos).");
+                return;
+            }
+
+            document.getElementById('play-btn').classList.add('hidden');
+            document.getElementById('pause-btn').classList.remove('hidden');
+            document.getElementById('playback-progress-container').classList.remove('hidden');
+
+            isPlaybackRunning = true;
+            const displayEl = document.getElementById('verified-text-display');
+            const barEl = document.getElementById('playback-bar');
+            
+            displayEl.textContent = "";
+            let eventIndex = 0;
+            const startTime = data.events[0].time;
+            const totalDuration = data.events[data.events.length - 1].time - startTime || 1;
+
+            function step() {
+                if (!isPlaybackRunning) return;
+
+                if (eventIndex < data.events.length) {
+                    const ev = data.events[eventIndex];
+                    displayEl.textContent = ev.val;
+
+                    const progress = ((ev.time - startTime) / totalDuration) * 100;
+                    barEl.style.width = Math.min(progress, 100) + '%';
+
+                    eventIndex++;
+                    playbackTimer = setTimeout(step, 40);
+                } else {
+                    pauseSession();
+                    barEl.style.width = '100%';
+                }
+            }
+
+            step();
+        }
+
+        function pauseSession() {
+            isPlaybackRunning = false;
+            if (playbackTimer) clearTimeout(playbackTimer);
+
+            document.getElementById('play-btn').classList.remove('hidden');
+            document.getElementById('pause-btn').classList.add('hidden');
+
+            if (window.activeSessionData) {
+                document.getElementById('verified-text-display').textContent = window.activeSessionData.text;
+            }
+        }
+    </script>
+</body>
+</html>

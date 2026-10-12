@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class', // Modo oscuro controlado por clase
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -17,14 +17,6 @@
                             500: '#22c55e',
                             600: '#16a34a',
                             700: '#15803d',
-                        },
-                        // Paleta personalizada para el modo claro (beige)
-                        papyrus: {
-                            50: '#fffef2', // Fondo principal muy claro
-                            100: '#fcf6e5', // Fondo de bloques
-                            200: '#f5e6c2', // Bordes y sombras
-                            700: '#8a7a5a', // Texto secundario
-                            900: '#5c4e31', // Texto principal
                         }
                     }
                 }
@@ -40,66 +32,9 @@
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
-
-        /* Estilos específicos para el modo claro (beige) por defecto */
-        body.light {
-            background-color: var(--color-papyrus-50);
-            color: var(--color-papyrus-900);
-        }
-
-        .light .bg-slate-900/80,
-        .light .bg-slate-900/50,
-        .light .bg-slate-900/90,
-        .light .bg-slate-950 {
-             background-color: var(--color-papyrus-100);
-             border-color: var(--color-papyrus-200);
-             box-shadow: 0 4px 6px -1px var(--color-papyrus-200);
-        }
-        
-        .light .bg-slate-800,
-        .light .bg-slate-800/80 {
-            background-color: var(--color-papyrus-200);
-            color: var(--color-papyrus-700);
-            border-color: var(--color-papyrus-200);
-        }
-
-        .light .border-slate-800,
-        .light .border-slate-800/80,
-        .light .border-slate-800/50,
-        .light .border-slate-700 {
-             border-color: var(--color-papyrus-200);
-        }
-
-        .light .text-slate-100,
-        .light .text-white {
-            color: var(--color-papyrus-900);
-        }
-
-        .light .text-slate-400,
-        .light .text-slate-500,
-        .light .text-slate-600 {
-            color: var(--color-papyrus-700);
-        }
-        
-        .light .text-brand-500,
-        .light .text-brand-400 {
-            color: var(--color-brand-600);
-        }
-        
-        .light .bg-brand-600 {
-            background-color: var(--color-brand-600);
-        }
-        
-        .light .bg-brand-600/20 {
-            background-color: rgba(22, 163, 74, 0.15);
-        }
-
-        .light #playback-progress-container {
-             background-color: var(--color-papyrus-200);
-        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white light">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
     <!-- Cabecera -->
     <header class="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
@@ -116,9 +51,9 @@
                     <span class="w-2 h-2 rounded-full bg-slate-500" id="status-dot"></span>
                     <span id="status-text">Listo para redactar</span>
                 </div>
-                <button onclick="toggleMode()" class="w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition border border-slate-700/50">
-                    <i class="fa-solid fa-sun light:hidden dark:block"></i> <!-- Icono sol para modo claro -->
-                    <i class="fa-solid fa-moon dark:hidden light:block"></i> <!-- Icono luna para modo oscuro -->
+                <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition border border-slate-700/50">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:block"></i>
                 </button>
             </div>
         </div>
@@ -320,8 +255,8 @@
             keystrokes: 0,
             startTime: null,
             duration: 0,
-            events: [], // Guarda la secuencia de pulsaciones para reproducción
-            pasteEvents: [], // Registro de bloques pegados
+            events: [],
+            pasteEvents: [],
             aiDetected: false,
             aiReason: ""
         };
@@ -337,7 +272,6 @@
         const minCharsNotice = document.getElementById('min-chars-notice');
         const charsNeededEl = document.getElementById('chars-needed');
 
-        // Inicialización al cargar la página
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash.substring(1);
             if (hash) {
@@ -351,13 +285,9 @@
                 }
             }
 
-            // Por defecto, aplicar modo claro (beige) al iniciar
-            document.body.classList.add('light');
             sessionData.startTime = Date.now();
             
-            // Escuchar eventos de teclado
             inputEl.addEventListener('keydown', (e) => {
-                // Permitir teclas de navegación pero registrar pulsaciones válidas
                 if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Space') {
                     sessionData.keystrokes++;
                     keystrokeCountEl.textContent = sessionData.keystrokes;
@@ -370,7 +300,6 @@
                 }
             });
 
-            // Control estricto de pegado (Evitar copia/pegado de IA > 100 caracteres)
             inputEl.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -385,7 +314,6 @@
                     time: Date.now() - sessionData.startTime
                 });
 
-                // Insertar el texto de forma simulada en la posición del cursor
                 const start = inputEl.selectionStart;
                 const end = inputEl.selectionEnd;
                 const currentVal = inputEl.value;
@@ -423,7 +351,6 @@
             sessionData.text = inputEl.value;
             sessionData.duration = Math.round((Date.now() - sessionData.startTime) / 1000);
 
-            // Comprobación adicional de longitud total si se pegó texto acumulado
             if (sessionData.text.length > 100 && sessionData.keystrokes < (sessionData.text.length * 0.15)) {
                 sessionData.aiDetected = true;
                 sessionData.aiReason = "El volumen de texto no se corresponde con la actividad de tecleo registrada.";
@@ -442,7 +369,6 @@
             document.getElementById('editor-view').classList.add('hidden');
             document.getElementById('result-view').classList.remove('hidden');
 
-            // Rellenar estadísticas
             document.getElementById('res-words').textContent = data.text.trim() === '' ? 0 : data.text.trim().split(/\s+/).length;
             document.getElementById('res-chars').textContent = data.text.length;
             document.getElementById('res-time').textContent = data.duration + 's';
@@ -456,7 +382,6 @@
                 document.getElementById('res-paste-status').classList.add('text-amber-400');
             }
 
-            // Veredicto de autoría e IA
             const verdictIconContainer = document.getElementById('verdict-icon-container');
             const verdictIcon = document.getElementById('verdict-icon');
             const verdictTitle = document.getElementById('verdict-title');
@@ -482,7 +407,6 @@
             document.getElementById('share-link-input-top').value = finalLinkToDisplay;
             document.getElementById('share-link-input-bottom').value = finalLinkToDisplay;
 
-            // Guardar datos globales para reproducción
             window.activeSessionData = data;
         }
 
@@ -504,9 +428,7 @@
             window.location.reload();
         }
 
-        // Función para alternar entre el modo claro (beige) y oscuro
-        function toggleMode() {
-            document.body.classList.toggle('light');
+        function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
         }
 
@@ -541,7 +463,7 @@
                     barEl.style.width = Math.min(progress, 100) + '%';
 
                     eventIndex++;
-                    playbackTimer = setTimeout(step, 40); // Velocidad de reproducción fluida
+                    playbackTimer = setTimeout(step, 40);
                 } else {
                     pauseSession();
                     barEl.style.width = '100%';
